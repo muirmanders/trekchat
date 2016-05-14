@@ -7,6 +7,7 @@
   height: 500px;
   border: 1px solid black;
   float: left;
+  overflow: auto;
 }
 
 .users-frame {
@@ -14,6 +15,7 @@
   height: 500px;
   border: 1px solid black;
   float: left;
+  overflow: auto;
 }
 
 .users-frame p {

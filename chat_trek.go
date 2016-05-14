@@ -19,8 +19,10 @@ func init() {
 
 func main() {
 	s := &server{
-		clients: make(map[string]*client),
+		clients: make(map[string]Client),
 	}
+	s.initBots()
+
 	http.Handle("/connect", http.HandlerFunc(s.handleConnect))
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -28,16 +30,25 @@ func main() {
 
 type server struct {
 	sync.RWMutex
-	clients map[string]*client
+	clients map[string]Client
 }
 
-type client struct {
+type Client interface {
+	SendCommand(string, interface{}) error
+	Name() string
+}
+
+type webClient struct {
 	sync.RWMutex
 	name string
 	conn *websocket.Conn
 }
 
-func (c *client) sendCommand(command string, args interface{}) error {
+func (c *webClient) Name() string {
+	return c.name
+}
+
+func (c *webClient) SendCommand(command string, args interface{}) error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -92,7 +103,7 @@ func randomName() string {
 	return names[rand.Intn(len(names))]
 }
 
-func (s *server) broadcastCommand(sender *client, command string, args interface{}) {
+func (s *server) broadcastCommand(sender Client, command string, args interface{}) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -101,16 +112,16 @@ func (s *server) broadcastCommand(sender *client, command string, args interface
 			continue
 		}
 
-		err := c.sendCommand(command, args)
+		err := c.SendCommand(command, args)
 
 		if err != nil {
-			log.Printf("Failed sending message to %s: %s", c.name, err)
+			log.Printf("Failed sending message to %s: %s", c.Name(), err)
 		}
 	}
 }
 
-func (s *server) addClient(conn *websocket.Conn) *client {
-	c := &client{conn: conn}
+func (s *server) addWebClient(conn *websocket.Conn) *webClient {
+	c := &webClient{conn: conn}
 
 	s.Lock()
 	defer func() {
@@ -137,9 +148,9 @@ func (s *server) addClient(conn *websocket.Conn) *client {
 	}
 }
 
-func (s *server) removeClient(c *client) {
+func (s *server) removeClient(c Client) {
 	s.Lock()
-	delete(s.clients, c.name)
+	delete(s.clients, c.Name())
 	s.Unlock()
 
 	s.broadcastUsers()
@@ -149,7 +160,7 @@ func (s *server) broadcastUsers() {
 	var users []string
 	s.RLock()
 	for _, c := range s.clients {
-		users = append(users, c.name)
+		users = append(users, c.Name())
 	}
 	s.RUnlock()
 	sort.Strings(users)
@@ -218,8 +229,8 @@ var enhancements = map[string][]string{
 	},
 }
 
-func enhanceMessage(sender string, message *messageArgs) {
-	if l := len(enhancements[sender]); l > 0 && rand.Intn(2) == 0 {
-		message.Message = enhancements[sender][rand.Intn(l)]
+func enhanceMessage(sender string, message *messageArgs, idx int) {
+	if l := len(enhancements[sender]); l > 0 {
+		message.Message = enhancements[sender][idx%l]
 	}
 }

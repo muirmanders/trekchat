@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 )
 
@@ -15,7 +16,7 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sender := s.addClient(conn)
+	sender := s.addWebClient(conn)
 
 	log.Printf("User %s connected", sender.name)
 
@@ -24,13 +25,15 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 		s.removeClient(sender)
 	}()
 
-	err = sender.sendCommand("welcome", map[string]interface{}{
+	err = sender.SendCommand("welcome", map[string]interface{}{
 		"name": sender.name,
 	})
 	if err != nil {
 		log.Printf("Error sending welcome command: %s", err)
 		return
 	}
+
+	var enhanceCount int
 
 	for {
 		var (
@@ -54,7 +57,10 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 
 			message.Sender = sender.name
 
-			enhanceMessage(sender.name, &message)
+			if rand.Intn(2) == 0 {
+				enhanceMessage(sender.name, &message, enhanceCount)
+				enhanceCount++
+			}
 
 			if message.Private {
 				s.RLock()
@@ -70,10 +76,10 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 
-				err := recipient.sendCommand("message", message)
+				err := recipient.SendCommand("message", message)
 
 				if err != nil {
-					log.Printf("Failed sending message to %s: %s", recipient.name, err)
+					log.Printf("Failed sending message to %s: %s", recipient.Name(), err)
 					responseCommand = "error"
 					responseArgs = map[string]string{
 						"error":   "delivery_failed",
@@ -97,7 +103,7 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := sender.sendCommand(responseCommand, responseArgs); err != nil {
+		if err := sender.SendCommand(responseCommand, responseArgs); err != nil {
 			log.Printf("error writing response: %s", err)
 			return
 		}
