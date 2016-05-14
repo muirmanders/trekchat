@@ -1,0 +1,54 @@
+#container {
+  display: none;
+}
+
+.chat-frame {
+  width: 500px;
+  height: 500px;
+  border: 1px solid black;
+  float: left;
+}
+
+.users-frame {
+  width: 150px;
+  height: 500px;
+  border: 1px solid black;
+  float: left;
+}
+
+.users-frame p {
+  margin: 5px 0 0 5px;
+}
+
+.chat-input {
+  width: 495px;
+  border: 1px solid black;
+  line-height: 30px;
+  padding: 0 0 0 5px;
+  margin-top: 5px;
+  font-size: large;
+}
+
+.clear {
+  clear: both;
+}
+
+p.chat-message {
+  margin: 5px 0 0 5px;
+}
+
+p.error {
+  color: red;
+}
+
+p.welcome {
+  background-color: pink
+}
+
+p.from-me {
+  background-color: lightgray;
+}
+
+p.private {
+  background-color: orange;
+}
