@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+type Bot interface {
+	Client
+	Run()
+}
+
 type bot struct {
 	server       *server
 	name         string
@@ -26,7 +31,7 @@ func (b *bot) SendCommand(c string, args interface{}) error {
 	return nil
 }
 
-func (b *bot) run() {
+func (b *bot) Run() {
 	for {
 		time.Sleep(time.Second * (10 + time.Duration(rand.Intn(5))))
 
@@ -42,6 +47,17 @@ func (b *bot) run() {
 }
 
 func (s *server) initBots() {
+	addBot := func(b Bot) {
+		s.clients[b.Name()] = b
+		s.clientStats[b.Name()] = &clientStats{
+			ConnectionCount: 1,
+		}
+
+		go b.Run()
+	}
+
+	addBot(&bot{s, "borg", 0})
+
 	for i := 0; i < 5; i++ {
 		name := randomName()
 		if s.clients[name] != nil {
@@ -49,22 +65,10 @@ func (s *server) initBots() {
 			continue
 		}
 
-		b := &bot{s, name, 0}
-		s.clients[name] = b
-		s.clientStats[name] = &clientStats{
-			ConnectionCount: 1,
-		}
-
-		go b.run()
+		addBot(&bot{s, name, 0})
 	}
 
-	r := romulan{s}
-	s.clients[r.Name()] = r
-	s.clientStats[r.Name()] = &clientStats{
-		ConnectionCount: 1,
-	}
-
-	go r.run()
+	addBot(romulan{s})
 }
 
 type romulan struct {
@@ -79,7 +83,7 @@ func (r romulan) SendCommand(c string, args interface{}) error {
 	return nil
 }
 
-func (r romulan) run() {
+func (r romulan) Run() {
 	for i := 0; true; i++ {
 		if i%10000 == 0 {
 			r.server.Lock()

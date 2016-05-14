@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"runtime"
 	"sort"
 	"sync"
 	"time"
@@ -18,7 +17,6 @@ import (
 )
 
 func init() {
-	runtime.GOMAXPROCS(1)
 	rand.Seed(time.Now().UnixNano())
 }
 
