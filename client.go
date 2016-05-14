@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -22,7 +21,7 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		log.Printf("User %s disconnected", sender.name)
-		s.removeClient(sender)
+		s.removeClient(sender.Name())
 	}()
 
 	err = sender.SendCommand("welcome", map[string]interface{}{
@@ -62,42 +61,18 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 				enhanceCount++
 			}
 
-			if message.Private {
-				s.RLock()
-				recipient := s.clients[message.Recipient]
-				s.RUnlock()
-
-				if recipient == nil {
-					responseCommand = "error"
-					responseArgs = map[string]string{
-						"error":   "no_such_recipient",
-						"message": fmt.Sprintf("%q is not in the chat room.", message.Recipient),
-					}
-					break
+			err := s.sendMessage(sender, message)
+			if err != nil {
+				responseCommand = "error"
+				responseArgs = map[string]string{
+					"message": err.Error(),
 				}
-
-				err := recipient.SendCommand("message", message)
-
-				if err != nil {
-					log.Printf("Failed sending message to %s: %s", recipient.Name(), err)
-					responseCommand = "error"
-					responseArgs = map[string]string{
-						"error":   "delivery_failed",
-						"message": fmt.Sprintf("Your message to %s could not be delivered.", message.Recipient),
-					}
-					break
-				}
-
-				responseCommand = "message"
-				message.FromMe = true
-				responseArgs = message
-			} else {
-				s.broadcastCommand(sender, "message", message)
-
-				responseCommand = "message"
-				message.FromMe = true
-				responseArgs = message
+				break
 			}
+
+			responseCommand = "message"
+			message.FromMe = true
+			responseArgs = message
 		default:
 			log.Printf("unknown command: %s", command.Command)
 			return

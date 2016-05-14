@@ -2,26 +2,41 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
+	"net"
 	"net/http"
+	"runtime"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/retailnext/cannula"
 )
 
 func init() {
+	runtime.GOMAXPROCS(1)
 	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
 	s := &server{
-		clients: make(map[string]Client),
+		clients:     make(map[string]Client),
+		clientStats: make(map[string]*clientStats),
 	}
 	s.initBots()
+
+	cannula.HandleFunc("/debug/chat/users", s.debugUsers)
+	cannula.HandleFunc("/debug/chat/user/", s.debugUser)
+
+	l, err := net.Listen("tcp4", "localhost:8081")
+	if err != nil {
+		panic(err)
+	}
+	go cannula.Serve(l)
 
 	http.Handle("/connect", http.HandlerFunc(s.handleConnect))
 	http.Handle("/", http.FileServer(http.Dir("static")))
@@ -30,7 +45,14 @@ func main() {
 
 type server struct {
 	sync.RWMutex
-	clients map[string]Client
+	clients     map[string]Client
+	clientStats map[string]*clientStats
+}
+
+type clientStats struct {
+	BroadcastCount  int64 `json:"broadcast_count"`
+	PrivateCount    int64 `json:"private_count"`
+	ConnectionCount int64 `json:"connection_count"`
 }
 
 type Client interface {
@@ -52,10 +74,15 @@ func (c *webClient) SendCommand(command string, args interface{}) error {
 	c.Lock()
 	defer c.Unlock()
 
-	return c.conn.WriteJSON(commandToClient{
+	err := c.conn.WriteJSON(commandToClient{
 		Command: command,
 		Args:    args,
 	})
+	if err != nil {
+		log.Printf("Delivery to %s failed: %s", c.name, err)
+		return errors.New("delivery failed")
+	}
+	return nil
 }
 
 var upgrader = websocket.Upgrader{
@@ -103,6 +130,31 @@ func randomName() string {
 	return names[rand.Intn(len(names))]
 }
 
+func (s *server) sendMessage(from Client, msg messageArgs) error {
+	s.Lock()
+	stats := s.clientStats[from.Name()]
+	if stats == nil {
+		stats = &clientStats{}
+		s.clientStats[from.Name()] = stats
+	}
+	s.Unlock()
+
+	if msg.Private {
+		stats.PrivateCount++
+		s.RLock()
+		recipient := s.clients[msg.Recipient]
+		s.RUnlock()
+		if recipient == nil {
+			return fmt.Errorf("no such recipient %s", msg.Recipient)
+		}
+		return recipient.SendCommand("message", msg)
+	} else {
+		stats.BroadcastCount++
+		s.broadcastCommand(from, "message", msg)
+		return nil
+	}
+}
+
 func (s *server) broadcastCommand(sender Client, command string, args interface{}) {
 	s.RLock()
 	defer s.RUnlock()
@@ -123,14 +175,20 @@ func (s *server) broadcastCommand(sender Client, command string, args interface{
 func (s *server) addWebClient(conn *websocket.Conn) *webClient {
 	c := &webClient{conn: conn}
 
+	var name string
+
 	s.Lock()
 	defer func() {
+		if s.clientStats[name] == nil {
+			s.clientStats[name] = &clientStats{}
+		}
+		s.clientStats[name].ConnectionCount++
 		s.Unlock()
 		s.broadcastUsers()
 	}()
 
 	for i := 0; i < 100; i++ {
-		name := randomName()
+		name = randomName()
 		if s.clients[name] == nil {
 			c.name = name
 			s.clients[name] = c
@@ -139,7 +197,7 @@ func (s *server) addWebClient(conn *websocket.Conn) *webClient {
 	}
 
 	for {
-		name := fmt.Sprintf("cadet#%d", rand.Intn(10000))
+		name = fmt.Sprintf("cadet#%d", rand.Intn(10000))
 		if s.clients[name] == nil {
 			c.name = name
 			s.clients[name] = c
@@ -148,9 +206,9 @@ func (s *server) addWebClient(conn *websocket.Conn) *webClient {
 	}
 }
 
-func (s *server) removeClient(c Client) {
+func (s *server) removeClient(name string) {
 	s.Lock()
-	delete(s.clients, c.Name())
+	delete(s.clients, name)
 	s.Unlock()
 
 	s.broadcastUsers()
