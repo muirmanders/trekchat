@@ -11,38 +11,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
+	"time"
 )
 
-func (s *server) debugUsers(w http.ResponseWriter, r *http.Request) {
+func (s *server) debugStatus(w http.ResponseWriter, r *http.Request) {
 	var (
-		names []string
+		users, msgs, private int64
 	)
-
 	s.RLock()
-	for _, c := range s.clients {
-		names = append(names, c.Name())
+	for _, s := range s.clientStats {
+		msgs += s.BroadcastCount
+		private += s.PrivateCount
+		users++
 	}
 	s.RUnlock()
 
-	sort.Strings(names)
-
-	res := make(map[string]*clientStats)
-
-	s.RLock()
-	for _, n := range names {
-		res[n] = s.clientStats[n]
-	}
-	s.RUnlock()
-
-	out, err := json.MarshalIndent(res, "", "  ")
-	if err != nil {
-		fmt.Fprintf(w, "error marshaling /users debug output: %s", err)
-		return
-	}
-
-	w.Write(out)
+	fmt.Fprintf(w, "Uers: %d\nMessages: %d\nPrivate Messages: %d\n", users, msgs, private)
 }
 
 func (s *server) debugUser(w http.ResponseWriter, r *http.Request) {
@@ -51,14 +36,42 @@ func (s *server) debugUser(w http.ResponseWriter, r *http.Request) {
 
 	s.RLock()
 	_, ok := s.clients[name]
+	stats := s.clientStats[name]
 	s.RUnlock()
 	if !ok {
-		w.Write([]byte(fmt.Sprintf("no such user %q\n", name)))
+		fmt.Fprintf(w, "no such user %q\n", name)
 		return
 	}
 
-	if r.Method == "DELETE" {
+	if r.Method == "GET" {
+		encoder := json.NewEncoder(w)
+		encoder.Encode(stats)
+	} else if r.Method == "DELETE" {
 		s.removeClient(name)
-		w.Write([]byte("kicked\n"))
+		fmt.Fprintf(w, "%q black-listed\n", name)
 	}
+}
+
+func (s *server) debugPrivate(w http.ResponseWriter, r *http.Request) {
+	done := make(chan struct{})
+
+	s.Lock()
+	s.privateHook = func(from Client, msg messageArgs) {
+		_, err := fmt.Fprintf(w, "%s private message from %q to %q\n", time.Now().UTC().Format(time.RFC3339), from.Name(), msg.Recipient)
+		if err != nil {
+			select {
+			case done <- struct{}{}:
+			default:
+			}
+		}
+	}
+	s.Unlock()
+
+	defer func() {
+		s.Lock()
+		s.privateHook = nil
+		s.Unlock()
+	}()
+
+	<-done
 }

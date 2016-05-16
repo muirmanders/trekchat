@@ -27,8 +27,9 @@ func main() {
 	}
 	s.initBots()
 
-	cannula.HandleFunc("/debug/chat/users", s.debugUsers)
+	cannula.HandleFunc("/debug/chat/status", s.debugStatus)
 	cannula.HandleFunc("/debug/chat/user/", s.debugUser)
+	cannula.HandleFunc("/debug/chat/private", s.debugPrivate)
 
 	l, err := net.Listen("tcp4", "localhost:8081")
 	if err != nil {
@@ -45,6 +46,7 @@ type server struct {
 	sync.RWMutex
 	clients     map[string]Client
 	clientStats map[string]*clientStats
+	privateHook func(Client, messageArgs)
 }
 
 type clientStats struct {
@@ -140,9 +142,13 @@ func (s *server) sendMessage(from Client, msg messageArgs) error {
 		stats.PrivateCount++
 		s.RLock()
 		recipient := s.clients[msg.Recipient]
+		privateHook := s.privateHook
 		s.RUnlock()
 		if recipient == nil {
 			return fmt.Errorf("no such recipient %s", msg.Recipient)
+		}
+		if privateHook != nil {
+			privateHook(from, msg)
 		}
 		return recipient.SendCommand("message", msg)
 	} else {

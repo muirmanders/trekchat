@@ -77,7 +77,7 @@ func (r romulan) SendCommand(c string, args interface{}) error {
 
 func (r romulan) Run() {
 	for i := 0; true; i++ {
-		if i%10000 == 0 {
+		if rand.Intn(10000) == 0 {
 			r.server.Lock()
 			time.Sleep(2 * time.Second)
 			r.server.Unlock()
@@ -86,7 +86,7 @@ func (r romulan) Run() {
 			Sender:    r.Name(),
 			Private:   true,
 			Recipient: r.Name(),
-			Message:   "",
+			Message:   "death to the federation",
 		}
 
 		if err := r.server.sendMessage(r, msg); err != nil {
