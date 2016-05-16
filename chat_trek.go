@@ -114,7 +114,6 @@ var names = []string{
 	"data",
 	"barclay",
 	"troi",
-	"lwaxana",
 	"q",
 	"crusher",
 	"wesley",
@@ -227,61 +226,66 @@ func (s *server) broadcastUsers() {
 
 var enhancements = map[string][]string{
 	"picard": []string{
-		"Tea. Earl Gray. Hot.",
-		"Broccoli, is that report ready yet?",
-		"STFU Wesley.",
+		"I expect everyone to attend my flute recital tonight.",
+		"Tea. Earl Gray. Hot. Oops, wrong terminal.",
+		"Beverley, I've pulled something in my groin. Can you come take a look tonight, say 1800 hours?",
 	},
 	"worf": []string{
-		"Captain, I recommend we fire all photon torpedos.",
+		"Captain, ten forward has stopped serving gagh. I recommend we fire all photon torpedos.",
 		"Alexander, you will never be a warrior if you keep playing with those dolls!",
-		"AFK waxing my bat'leth",
+		"I will be AFK for a moment as I apply the second coat of wax to my bat'leth",
+		"Why does everyone who enters this chat room suddenly lack honor?",
 	},
 	"data": []string{
-		"LOL. I totally understand the humor!",
 		"Anyone for a game of Strategema?",
+		"LOL. I comprehended the humor!",
 		"Captain, if we emit a high-intensity gravitron pulse, we might be able to reboot Wesley's computer.",
-		"Can anyone watch Spot this weekend?",
+		"Can anyone watch Spot this weekend? There's an all night Sherlock Holmes marathon on holodeck 2.",
 	},
 	"barclay": []string{
-		"I'll be on the holodeck. I'm not to be disturbed.",
+		"I'll be on the holodeck running a work-related program. I'm not to be disturbed.",
+		"I think I may have contracted replicatoritis.",
 		"I'm holding a symposium about Barclay's Protomorphosis Syndrome tonight in Ten Forward if anyone is interested.",
 	},
 	"troi": []string{
 		"I'm feeling a strong emotional presence in this chat room.",
+		"Barclay, you aren't going to get over your severe spacephobia if you keep skipping our sessions.",
 		"My mind is being invaded again for the third time this week!",
 	},
-	"lwaxana": []string{
-		"Captain, you should be ashamed for thinking that.",
-		"Diana, I took the liberty of arranging a romantic encounter for you and Will ;)",
-	},
 	"q": []string{
-		"What is the point to all this?",
-		"You pitiful humans are pathetic.",
-		"I must introduce these emojis to the continuum :P",
+		"We have an opening for a new q. Any takers other than Wesley?",
+		"What is the point to all this? You pitiful humans are pathetic.",
+		"I must introduce these emoticons to the continuum :P",
 	},
 	"crusher": []string{
-		"Has anyone seen my cortical stimulator?",
+		"Geordi: can you help me reset the password on my tricorder again?",
+		"Wesley, I found the missing hyposprays in your quarters...",
 		"Don't be alarmed, but my nano-virus seems to have escaped.",
 	},
 	"wesley": []string{
 		"I think the ship is in grave danger!",
 		"Why isn't anyone responding to me? Maybe I need to reload my browser...",
+		"Shouldn't it be a bigger deal that space, time and thought are the same thing?",
 	},
 	"obrien": []string{
 		"Doctor, I've broken my arm on the holodeck again!",
 		"Keiko, I want a divorce",
+		"Who keeps calling for emergency transports for sacks of potatos? I'm not amused.",
 	},
 	"laforge": []string{
 		"Anyone want to go on a date or something?",
-		"Captain, I recommend we flood Cargo Bay 2 with Verteron particles.",
+		"Captain, I recommend we flood this chat room with Verteron particles.",
+		"A dilithium crystal and an antimatter pod walk into a bar...",
 	},
 	"riker": []string{
+		"I hope to see you all at my master class on how to sit down in a chair.",
 		"Data, will you answer that damn phone?!",
 		"OOO: on Riza until stardate 41672.9.",
 	},
 	"borg": []string{
 		"Resistance is not futile! lol jk",
 		"We are throwing a party over on the cube. All assimilatable life forms are invited! BYOB",
+		"You think a chat room frequency modulation can keep us out?",
 	},
 }
 

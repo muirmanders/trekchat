@@ -33,7 +33,7 @@ func (b *bot) SendCommand(c string, args interface{}) error {
 
 func (b *bot) Run() {
 	for {
-		time.Sleep(time.Second * (10 + time.Duration(rand.Intn(5))))
+		time.Sleep(time.Millisecond * (5000 + time.Duration(rand.Intn(30000))))
 
 		msg := messageArgs{
 			Sender: b.name,
@@ -56,15 +56,7 @@ func (s *server) initBots() {
 		go b.Run()
 	}
 
-	addBot(&bot{s, "borg", 0})
-
-	for i := 0; i < 5; i++ {
-		name := randomName()
-		if s.clients[name] != nil {
-			i--
-			continue
-		}
-
+	for _, name := range names {
 		addBot(&bot{s, name, 0})
 	}
 
