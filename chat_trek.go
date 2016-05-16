@@ -237,7 +237,7 @@ var enhancements = map[string][]string{
 		"Beverley, I've pulled something in my groin. Can you come take a look tonight, say 1800 hours?",
 	},
 	"worf": []string{
-		"Captain, ten forward has stopped serving gagh. I recommend we fire all photon torpedos.",
+		"Captain, ten forward has stopped serving gagh. I recommend we fire all photon torpedoes.",
 		"Alexander, you will never be a warrior if you keep playing with those dolls!",
 		"I will be AFK for a moment as I apply the second coat of wax to my bat'leth",
 		"Why does everyone who enters this chat room suddenly lack honor?",
@@ -276,7 +276,7 @@ var enhancements = map[string][]string{
 	"obrien": []string{
 		"Doctor, I've broken my arm on the holodeck again!",
 		"Keiko, I want a divorce",
-		"Who keeps calling for emergency transports for sacks of potatos? I'm not amused.",
+		"Who keeps calling for emergency transports for sacks of potatoes? I'm not amused.",
 	},
 	"laforge": []string{
 		"Anyone want to go on a date or something?",
