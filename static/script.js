@@ -43,7 +43,7 @@
         } else if (cmd.args.from_me) {
           msg.addClass("from-me");
         }
-        var was_at_bottom = chat_frame.prop("scrollHeight") - chat_frame.scrollTop() == chat_frame.height();
+        var was_at_bottom = Math.abs(chat_frame.prop("scrollHeight") - chat_frame.scrollTop() - chat_frame.height()) < 5;
         chat_frame.append(msg);
         if (was_at_bottom) {
           chat_frame.animate({scrollTop: chat_frame.prop("scrollHeight")}, 200);
